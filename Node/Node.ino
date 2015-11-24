@@ -14,9 +14,16 @@
 
 SoftwareSerial XBee(2, 3); 
 
-int ID = 2;
+int ID = 9;
 
 int STATUS;
+
+int count = 0;
+
+int count2 = 0;
+
+boolean NMODE = false;
+
 
 boolean spread = false;
 
@@ -190,7 +197,8 @@ void loop()
       Serial.println("== NORMAL ==");
 
       GreenLight(1);
-      
+
+      NMODE = false;
       // I do not need to send anything~
 
       nextState = ELECTION;
@@ -243,7 +251,8 @@ void loop()
         // Recover
         XBee.println('R');
       }
-
+      
+        
       // keep reading, make sure the buffer is empty after reading
       for(i=0; i < MSG_RECEIVE_PER_LOOP; i++)
       {
@@ -295,15 +304,36 @@ void loop()
 
         Serial.print("*** Receiving:");
         Serial.println(msg);
+        temp_m = charToInt(msg);
 
         if(msg == 'R')
         {
           nextState = NORMAL;
+          NMODE=true;
         }
-
+        else if(temp_m  < ID)
+        {
+          
+          count++;
+          
+          if(count == 5 && !NMODE)
+          {
+            count2++;
+            if(count2 == 2){
+              nextState = LEADER;
+              count2 = 0;
+            }
+            count = 0;
+          }  
+        }else
+        { 
+          if(!NMODE)
+          nextState = INFECTED;
+        }
+        
         delay(TIME_BETWEEN_READING);
       }
-      
+      count = 0;
       break;
     }
 
