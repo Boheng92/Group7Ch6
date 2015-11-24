@@ -14,9 +14,11 @@
 
 SoftwareSerial XBee(2, 3); 
 
-int ID = 3;
+int ID = 2;
 
 int STATUS;
+
+boolean spread = false;
 
 ///////////////////////////////////
 /////// Convert Functionns ////////
@@ -212,6 +214,16 @@ void loop()
           nextState = NORMAL;
         }
 
+        if(buttonClick() || msg == 'I')
+        {
+          // Recover
+          nextState = INFECTED;
+
+          spread = true;
+
+          break;
+        }
+
         delay(TIME_BETWEEN_READING);
       }
       
@@ -225,6 +237,12 @@ void loop()
       BlueLight(1);
 
       sendMyID();
+
+      if(buttonClick())
+      {
+        // Recover
+        XBee.println('R');
+      }
 
       // keep reading, make sure the buffer is empty after reading
       for(i=0; i < MSG_RECEIVE_PER_LOOP; i++)
@@ -260,6 +278,31 @@ void loop()
       Serial.println("== INFECTED ==");
 
       RedLight(1);
+
+      if(spread)
+      {
+        // Spread the Infection
+        XBee.println('I');
+
+        spread = false;
+      }
+      
+
+      // keep reading, make sure the buffer is empty after reading
+      for(i=0; i < MSG_RECEIVE_PER_LOOP; i++)
+      {
+        msg = XBee.read();
+
+        Serial.print("*** Receiving:");
+        Serial.println(msg);
+
+        if(msg == 'R')
+        {
+          nextState = NORMAL;
+        }
+
+        delay(TIME_BETWEEN_READING);
+      }
       
       break;
     }
